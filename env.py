@@ -8,100 +8,7 @@ from chessboard import Chessboard
 from env_item import Item
 from drawing import DrawingManager
 from action import ActionSpace
-
-
-class Agent():
-	def __init__(self, born_at=(0, 0), born_facing='E'):
-		# save parameters and don't change after init
-		self._born_at = born_at
-		self._born_facing = born_facing
-
-		# current location and facing, reset after each episode
-		self._at = born_at
-		self._facing = born_facing
-
-		# credit
-		self._credit = 0
-
-		# bag that stores objects this agent picked up
-		self.bag = []
-
-	def reset(self):
-		self._at = self.born_at
-		self._facing = self.facing
-
-	def step_to(self, to_index, facing):
-		self._at = to_index
-		self._facing = facing
-
-	def pickup(self, obj):
-		self.bag.append(obj)
-
-		# wk_debug
-		#self.credit *= 10
-		#self.credit += obj.reward
-
-		items = len(self.bag)
-		if items == 8:
-			self.credit = 10000
-			self.pickup_all += 1
-
-	def drop(self):
-		objs = self.bag
-		self.bag = []
-		self.credit = 0
-		return objs
-
-	@property
-	def credit(self):
-		return self._credit
-
-	@credit.setter
-	def credit(self, value):
-		self._credit = value
-
-	@property
-	def at(self):
-		return self._at
-
-	@at.setter
-	def at(self, where):
-		self._at = where
-	
-	@property
-	def facing(self):
-		return self._facing
-
-	@facing.setter
-	def facing(self, facing):
-		self._facing = facing
-
-	@property
-	def bag_of_objects(self):
-		return self.bag
-
-	@property
-	def born_at(self):
-		return self._born_at
-
-	@born_at.setter
-	def born_at(self, where):
-		if where is None:
-			where = (0, 0)  # default
-		self._born_at = where
-		self.reset()  # set current location to the born place and redraw agent
-
-	@property
-	def born_facing(self):
-		return self._born_facing
-
-	@born_facing.setter
-	def born_facing(self, facing):
-		if facing is None:
-			facing = 'E'
-		self._born_facing = facing
-		self.reset()
-
+from agent import Agent
 
 class Env():
 	def __init__(self, dimension=(5, 5), square_size=(80, 80), default_rewards=0, agent_born_at=(0, 0), agent_born_facing='E'):
@@ -188,17 +95,14 @@ class Env():
 		if self.show:
 			self._draw_item(item)
 
-	def remove_object(self, index):
-		item = self.object_at(index)
+	def remove_item(self, index):
+		item = self.map.item_at(index)
 		if item != None:
-			self.map.put_item(index, item)
+			self.map.delete_item(index)
 			if self.show:
 				self._remove_item(item)
 
 		return item
-
-	def object_at(self, index):
-		return self.map.item_at(index)
 
 	def set_walls(self, walls):
 		for wall in walls:
@@ -254,20 +158,20 @@ class Env():
 		self._draw_agent_step(next_index, action)
 		self.agent.step_to(next_index, action)
 
-		item = self.object_at(agent_loc)
+		item = self.map.item_at(agent_loc)
 		if item != None:
 			reward = item.credit
 		else:
 			reward = self.default_rewards
 
-		item = self.object_at(next_index)
+		item = self.map.item_at(next_index)
 		if item != None:
 			terminal = item.terminal
 
 			# if this item is pickable, let agent pick it up
 			if item.pickable == True:
 				self.agent.pickup(item)
-				self.remove_object(next_index)
+				self.remove_item(next_index)
 		else:
 			terminal = False
 
@@ -291,10 +195,10 @@ if __name__ == '__main__':
 	env.add_item('yellow_star', (0, 7), credit=1000, pickable=True, label="(1000)")
 	env.add_item('red_ball', (5, 6), terminal=True, label="Exit")
 
-	for _ in range(10):
+	for _ in range(100):
 		action = env.action_space.sample()
 		print(action)
 		reward, next, end = env.step(action)
 		print(reward, next, end)
-		time.sleep(0.5)
+		time.sleep(0.2)
 	env.reset()

@@ -17,6 +17,13 @@ class Chessboard():
 		assert self._is_valid_square_index(index)
 		self._items[index] = item
 
+	def delete_item(self, index):
+		assert self._is_valid_square_index(index)
+		try:
+			del self._items[index]
+		except KeyError:
+			pass
+
 	@property
 	def n_rows(self):
 		return self._rows

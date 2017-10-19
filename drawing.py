@@ -146,7 +146,7 @@ class DrawingManager(threading.Thread):
 		return canvas_id
 
 	def delete_object(self, name, index):
-		tag = self._tag_from_object(name, index)
+		tag = self._tag_of_square(index)
 		#self.canvas.dtag(tag, tag_of_cell)
 		self.canvas.delete(tag)
 
@@ -172,7 +172,7 @@ class DrawingManager(threading.Thread):
 			self.canvas.addtag_withtag(tag, canvas_id)
 		
 	def delete_text(self, index):
-		tag = _tag_of_text_square(index)
+		tag = self._tag_of_text_square(index)
 		self.canvas.delete(tag)
 		
 	#def draw_text_list(self, index_or_id, text_anchor_list):
