@@ -155,17 +155,23 @@ class Env():
 
 		#self.increase_access_counter(cur_index)
 
-		self._draw_agent_step(next_index, action)
-		self.agent.step_to(next_index, action)
-
 		item = self.map.item_at(agent_loc)
 		if item != None:
-			reward = item.credit
+			# if currently agent is on `terminal point`, then do nothing
+			if item.terminal == True:
+				return (0, agent_loc, True)
+			else:
+				reward = item.reward
 		else:
 			reward = self.default_rewards
 
+		# move agent to next location
+		self._draw_agent_step(next_index, action)
+		self.agent.step_to(next_index, action)
+
 		item = self.map.item_at(next_index)
 		if item != None:
+			# `terminal point` must be an item, empty square can't be terminal
 			terminal = item.terminal
 
 			# if this item is pickable, let agent pick it up
@@ -177,14 +183,18 @@ class Env():
 
 		if terminal == True:
 			reward += self.agent.credit
-			bag_of_objects = self.agent.drop()
-			for obj in bag_of_objects:
-				self.redraw_item(obj)
+			#bag_of_objects = self.agent.drop()
+			#for obj in bag_of_objects:
+			#	self.redraw_item(obj)
 
 		return (reward, next_index, terminal)
 
 	def reset(self):
 		self.agent.reset()
+		bag_of_objects = self.agent.drop()
+		for obj in bag_of_objects:
+			self.redraw_item(obj)
+
 		self._reset_agent_drawing()
 
 

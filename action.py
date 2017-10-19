@@ -8,7 +8,7 @@ class ActionSpace():
 		Args:
 			actions: A total set of actions for this action space.
 				 Allowed types can be `set`, `list` or `tuple`.
-				 If using a sequence-like type, duplicates will be removed by internally
+				 If using a tuple-like type, duplicates will be removed by internally
 				 converting it to `set` first.
 		"""
 		self._actions = tuple(set(actions))
@@ -21,9 +21,9 @@ class ActionSpace():
 	def _action_at(self, index):
 		return self._actions[index]
 
-	def _action_index(self, action):
+	def action_id(self, action):
 		return self._actions.index(action)	
-		
+
 	def dict_from_actions(self):
 		"""Return action dictionary, key is action, value is the corresponding action index
 		   in the internal tuple.

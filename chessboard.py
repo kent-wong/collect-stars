@@ -24,6 +24,9 @@ class Chessboard():
 		except KeyError:
 			pass
 
+	def delete_all_items(self):
+		self._items.clear()
+
 	@property
 	def n_rows(self):
 		return self._rows
