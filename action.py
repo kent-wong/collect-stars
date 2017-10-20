@@ -18,8 +18,8 @@ class ActionSpace():
 		"""Uses an uniform distribution to randomly choose an action"""
 		return random.choice(self._actions)
 
-	def _action_at(self, index):
-		return self._actions[index]
+	def action_from_id(self, action_id):
+		return self._actions[action_id]
 
 	def action_id(self, action):
 		return self._actions.index(action)	

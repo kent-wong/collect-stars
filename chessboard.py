@@ -37,7 +37,7 @@ class Chessboard():
 
 	@property
 	def all_items(self):
-		return self._items
+		return self._items.values()
 
 	@property
 	def index_space(self):
@@ -56,3 +56,6 @@ if __name__ == "__main__":
 	print("item at (3, 3):", chess.item_at((3, 3)))
 	print("index space:")
 	print(chess.index_space)
+
+	for value in chess.all_items:
+		print(value)

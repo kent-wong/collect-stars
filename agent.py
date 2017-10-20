@@ -22,17 +22,11 @@ class Agent():
 		self._at = to_index
 		self._facing = facing
 
-	def pickup(self, obj):
-		self.bag.append(obj)
+	def pickup(self, item):
+		self.bag.append(item)
 
-		# wk_debug
 		#self.credit *= 10
-		#self.credit += obj.reward
-
-		items = len(self.bag)
-		if items == 8:
-			self.credit = 10000
-			self.pickup_all += 1
+		self.credit += item.credit
 
 	def drop(self):
 		objs = self.bag

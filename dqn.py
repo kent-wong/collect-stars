@@ -18,9 +18,6 @@ class NeuralNetwork():
 		self.loss = None
 		self.opt = None
 
-		# session
-		self.sess = tf.Session()
-
 		# build the network
 		self._build(hidden_layers)
 
@@ -47,20 +44,24 @@ class NeuralNetwork():
 		self.loss = tf.reduce_mean(tf.square(self.targets__ - self.predict))
 		self.opt = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
-	def output(self, state):
-		feed = {self.inputs__: state.reshape(1, *state.shape)}
+		# session
+		self.sess = tf.Session()
+		self.sess.run(tf.global_variables_initializer())
+
+	def nn_output(self, states):
+		feed = {self.inputs__: states}
 		qtable_row = self.sess.run(self.output, feed_dict=feed)	
 		return qtable_row
 
 class DQN():
 	def __init__(self, n_features, n_actions, lr=0.001, gamma=0.99):
-		self._n_features = n_features
-		self._n_actions = n_actions
+		self.n_features = n_features
+		self.n_actions = n_actions
 
 		self.nn = NeuralNetwork(n_features, n_actions, [10, 10], lr)
 
 		# memory of episodes
-		self.memory = Memory(1000)
+		self.experience = Memory(1000)
 
 		# `action` selection algorithm parameters
 		self.explore_start = 0.9
@@ -74,10 +75,10 @@ class DQN():
 		self.lr = lr
 		self.gamma = gamma
 
-	def action_values(self, state, action=None):	
-		output = self.nn.output(state)
+	def action_values(self, states, action=None):	
+		output = self.nn.nn_output(states)
 		if action != None:
-			output = ouput[action]
+			output = output[action]
 		return output
 
 	def next_action(self, state):
@@ -85,17 +86,18 @@ class DQN():
 		if np.random.rand() < explore_p:  # should go to explore
 			action = np.random.choice(self.n_actions)
 		else:
-			output = self.action_values(state)
+			state = np.array(state)
+			output = self.action_values(state.reshape((1, *state.shape)))
 			action = np.argmax(output)
 		return action
 
-	def fill_memory(self, episode):
-		self.memory.add(episode)
+	def fill_experience(self, episode):
+		self.experience.add(episode)
 
 	def train_an_episode(self, episode):
 		states = np.array([step[0] for step in episode])
-		action = np.array([step[1] for step in episode])
-		reward = np.array([step[2] for step in episode])
+		actions = np.array([step[1] for step in episode])
+		rewards = np.array([step[2] for step in episode])
 		next_states = np.array([step[3] for step in episode])
 
 		action_values = self.action_values(next_states)
@@ -107,8 +109,8 @@ class DQN():
 
 		# training ...
 		self.episodes += 1
-		feed = {self.inputs__: states, self.actions__: actions, self.targets__: targets}
-		loss, _ = self.sess.run([self.loss, self.opt], feed_dict=feed)
+		feed = {self.nn.inputs__: states, self.nn.actions__: actions, self.nn.targets__: targets}
+		loss, _ = self.nn.sess.run([self.nn.loss, self.nn.opt], feed_dict=feed)
 			
 		return loss
 

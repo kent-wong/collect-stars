@@ -84,7 +84,7 @@ class Env():
 				index: A tuple `(row, column)` of chessboard square.
 		"""
 		item = Item(name, index, credit, terminal, pickable, label)
-		self.map.put_item(index, item)
+		self.map.put_item(item.index, item)
 
 		if self.show:
 			self._draw_item(item)
@@ -191,9 +191,10 @@ class Env():
 
 	def reset(self):
 		self.agent.reset()
-		bag_of_objects = self.agent.drop()
-		for obj in bag_of_objects:
-			self.redraw_item(obj)
+		bag_of_items = self.agent.drop()
+		for item in bag_of_items:
+			self.map.put_item(item.index, item)
+			self.redraw_item(item)
 
 		self._reset_agent_drawing()
 
