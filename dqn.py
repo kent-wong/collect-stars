@@ -61,7 +61,7 @@ class DQN():
 		self.nn = NeuralNetwork(n_features, n_actions, [10, 10], lr)
 
 		# memory of episodes
-		self.experience = Memory(1000)
+		self.experience = Memory(200)
 
 		# `action` selection algorithm parameters
 		self.explore_start = 0.9
@@ -114,10 +114,50 @@ class DQN():
 			
 		return loss
 
+	def train_batch(self, episodes):
+		all_states = None
+		all_actions = None
+		all_targets = None
+
+		for episode in episodes:
+			states = np.array([step[0] for step in episode])
+			actions = np.array([step[1] for step in episode])
+			rewards = np.array([step[2] for step in episode])
+			next_states = np.array([step[3] for step in episode])
+
+			action_values = self.action_values(next_states)
+
+			# the last one is `terminal` point, mark it using 0
+			action_values[-1] = (0, ) * self.n_actions
+
+			targets = rewards + self.gamma * np.max(action_values, axis=1)
+
+			if all_states is None:
+				all_states = states
+				all_actions = actions
+				all_targets = targets
+			else:
+				# concatenate
+				all_states = np.concatenate((all_states, states))
+				all_actions = np.concatenate((all_actions, actions))
+				all_targets = np.concatenate((all_targets, targets))
+
+			self.episodes += 1
+		
+		# training batch ...
+		feed = {self.nn.inputs__: all_states, self.nn.actions__: all_actions, self.nn.targets__: all_targets}
+		losses, _ = self.nn.sess.run([self.nn.loss, self.nn.opt], feed_dict=feed)
+			
+		return losses
+
 	def learn_from_experience(self, batch_size):
-		batch = self.memory.sample(batch_size)
-		for episode in batch:
-			self.train_an_episode(episode)
+		losses = 0
+		batch = self.experience.sample(batch_size)
+		#for episode in batch:
+			#losses += self.train_an_episode(episode)
+
+		losses = self.train_batch(batch)
+		return losses
 
 
 if __name__ == "__main__":
