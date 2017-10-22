@@ -31,7 +31,7 @@ class NeuralNetwork():
 		# build hidden layers
 		next_layer_inputs = self.inputs__
 		for layer_size in hidden_layer_sizes:
-			next_layer_inputs = tf.contrib.layers.fully_connected(next_layer_inputs, layer_size)
+			next_layer_inputs = tf.contrib.layers.fully_connected(next_layer_inputs, layer_size, activation_fn=tf.nn.sigmoid)
 
 		# build linear output layers
 		self.output = tf.contrib.layers.fully_connected(next_layer_inputs, self.n_actions, activation_fn=None)
@@ -54,19 +54,20 @@ class NeuralNetwork():
 		return qtable_row
 
 class DQN():
-	def __init__(self, n_features, n_actions, lr=0.001, gamma=0.99):
+	def __init__(self, n_features, n_actions, lr=0.001, gamma=0.99, experience_limit=None):
 		self.n_features = n_features
 		self.n_actions = n_actions
 
-		self.nn = NeuralNetwork(n_features, n_actions, [10, 10], lr)
+		self.nn = NeuralNetwork(n_features, n_actions, [128, 64], lr)
 
 		# memory of episodes
-		self.experience = Memory(200)
+		self.experience = Memory(maxlen=experience_limit)
 
 		# `action` selection algorithm parameters
 		self.explore_start = 0.9
 		self.explore_stop = 0.1
-		self.decay_rate = 0.0001
+		#self.decay_rate = 0.0001
+		self.decay_rate = 0.001
 
 		# training
 		self.episodes = 0
@@ -81,18 +82,28 @@ class DQN():
 			output = output[action]
 		return output
 
+	def best_action(self, state):
+		state = np.array(state)
+		matrix_form = state.reshape((1, *state.shape))
+		output = self.action_values(matrix_form)[0]
+		action = np.argmax(output)
+
+		return action
+
 	def next_action(self, state):
 		explore_p = self.explore_stop + (self.explore_start - self.explore_stop)*np.exp(-self.decay_rate*self.episodes)
 		if np.random.rand() < explore_p:  # should go to explore
 			action = np.random.choice(self.n_actions)
 		else:
-			state = np.array(state)
-			output = self.action_values(state.reshape((1, *state.shape)))
-			action = np.argmax(output)
+			action = self.best_action(state)
 		return action
 
 	def fill_experience(self, episode):
 		self.experience.add(episode)
+
+	def fill_experience_sparse(self, episode):
+		for s, a, r, s_ in episode:
+			pass	
 
 	def train_an_episode(self, episode):
 		states = np.array([step[0] for step in episode])
@@ -106,6 +117,26 @@ class DQN():
 		action_values[-1] = (0, ) * self.n_actions
 
 		targets = rewards + self.gamma * np.max(action_values, axis=1)
+
+		# agent is not moving in some steps(hit a wall), corresponding action should be zero-valued
+		#stay = (states == next_states).all(axis=1)
+		#targets[stay] = -1000
+
+		# wk_debug
+		#steps = []
+		#for i, v in enumerate(stay):
+		#	if v == True:
+		#		steps.append(i+1)
+		#print(steps)
+
+		#zero_targets = []
+		#for i, v in enumerate(targets):
+		#	if v == 0:
+		#		zero_targets.append(i+1)
+		#print(zero_targets)
+
+		# wk_debug
+		#print("targets:", targets)
 
 		# training ...
 		self.episodes += 1
@@ -131,6 +162,19 @@ class DQN():
 			action_values[-1] = (0, ) * self.n_actions
 
 			targets = rewards + self.gamma * np.max(action_values, axis=1)
+
+			# agent is not moving in some steps(hit a wall), corresponding action should be zero-valued
+			#stay = (states == next_states).all(axis=1)
+			#targets[stay] = 0
+
+			# wk_debug
+			#for i in stay:
+			#	if i == True:
+			#		print(i, "end=")
+			#print()
+
+			#print("stay:", stay)
+			#print("targets:", targets)
 
 			if all_states is None:
 				all_states = states

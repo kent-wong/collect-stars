@@ -128,6 +128,10 @@ class DrawingManager(threading.Thread):
 		return 'text_square@' + str(index)
 
 	@staticmethod
+	def _tag_of_text():
+		return 'text@all'
+
+	@staticmethod
 	def _tag_of_agent():
 		return 'agent'
 
@@ -164,17 +168,23 @@ class DrawingManager(threading.Thread):
 	def draw_text(self, index, text_dict):
 		bbox = self.bounding_box(index)
 		tag = self._tag_of_text_square(index)
+		tag_all = self._tag_of_text()
 
 		self.canvas.delete(tag)
 		anchor_dict = {"N":tk.N, "S":tk.S, "W":tk.W, "E":tk.E, "C":tk.CENTER}
 		for anchor, text in text_dict.items():
 			canvas_id = draw_text(self.canvas, bbox, text, anchor_dict[anchor])
 			self.canvas.addtag_withtag(tag, canvas_id)
+			self.canvas.addtag_withtag(tag_all, tag)
 		
 	def delete_text(self, index):
 		tag = self._tag_of_text_square(index)
 		self.canvas.delete(tag)
 		
+	def delete_all_text(self):
+		tag_all = self._tag_of_text()
+		self.canvas.delete(tag_all)
+
 	#def draw_text_list(self, index_or_id, text_anchor_list):
 	#	bbox = self.bounding_box(index_or_id)
 	#	cell_id = self.grid.insure_id(index_or_id)

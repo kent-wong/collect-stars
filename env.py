@@ -41,6 +41,9 @@ class Env():
 		# whether environment changes should be displayed on screen
 		self._show = True
 
+		# track total steps agent has walked
+		self._steps = 0
+
 		# reset environment
 		self.reset()
 
@@ -51,6 +54,10 @@ class Env():
 	@show.setter
 	def show(self, onoff):
 		self._show = onoff
+
+	@property
+	def steps(self):
+		return self._steps
 
 	def _draw_item(self, item):
 		self.drawing_manager.draw_object(item.name, item.index)
@@ -103,6 +110,19 @@ class Env():
 				self._remove_item(item)
 
 		return item
+
+	def draw_text(self, index, text_dict):
+		if self.show:
+			self.drawing_manager.draw_text(index, text_dict)
+
+	def show_action_values(action_values):
+		text_dict = {}    
+		for action_id, value in enumerate(action_values):
+			action = self.action_space.action_from_id(action_id)
+			value = np.round(value, 2)
+			text_dict[action] = str(value)
+
+		self.draw_text(location, text_dict)
 
 	def set_walls(self, walls):
 		for wall in walls:
@@ -187,9 +207,12 @@ class Env():
 			#for obj in bag_of_objects:
 			#	self.redraw_item(obj)
 
+		self._steps += 1
 		return (reward, next_index, terminal)
 
 	def reset(self):
+		self.drawing_manager.delete_all_text()
+
 		self.agent.reset()
 		bag_of_items = self.agent.drop()
 		for item in bag_of_items:
@@ -197,6 +220,7 @@ class Env():
 			self.redraw_item(item)
 
 		self._reset_agent_drawing()
+		self._steps = 0
 
 
 if __name__ == '__main__':

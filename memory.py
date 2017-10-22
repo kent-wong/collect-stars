@@ -25,6 +25,9 @@ class Memory():
 
 		return [a_list[i] for i in choices]
 
+	def clear(self):
+		self._memory.clear()
+
 	@property
 	def n_records(self):
 		return len(self._memory)
@@ -32,6 +35,15 @@ class Memory():
 	@property
 	def is_full(self):
 		return self.n_records == self._memory.maxlen
+
+
+	@property
+	def maxlen(self):
+		return self._memory.maxlen
+
+	@maxlen.setter
+	def maxlen(self, value):
+		self._memory = deque(maxlen=value)
 
 
 if __name__ == "__main__":
