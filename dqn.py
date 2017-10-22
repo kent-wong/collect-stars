@@ -31,7 +31,7 @@ class NeuralNetwork():
 		# build hidden layers
 		next_layer_inputs = self.inputs__
 		for layer_size in hidden_layer_sizes:
-			next_layer_inputs = tf.contrib.layers.fully_connected(next_layer_inputs, layer_size, activation_fn=tf.nn.sigmoid)
+			next_layer_inputs = tf.contrib.layers.fully_connected(next_layer_inputs, layer_size, activation_fn=tf.nn.relu)
 
 		# build linear output layers
 		self.output = tf.contrib.layers.fully_connected(next_layer_inputs, self.n_actions, activation_fn=None)
@@ -58,7 +58,7 @@ class DQN():
 		self.n_features = n_features
 		self.n_actions = n_actions
 
-		self.nn = NeuralNetwork(n_features, n_actions, [128, 64], lr)
+		self.nn = NeuralNetwork(n_features, n_actions, [32, 32], lr)
 
 		# memory of episodes
 		self.experience = Memory(maxlen=experience_limit)
@@ -98,12 +98,32 @@ class DQN():
 			action = self.best_action(state)
 		return action
 
-	def fill_experience(self, episode):
-		self.experience.add(episode)
+	def fill_experience(self, exp):
+		self.experience.add(exp)
 
-	def fill_experience_sparse(self, episode):
-		for s, a, r, s_ in episode:
-			pass	
+	def train_batch_states(self, batch_size):
+		batch = self.experience.sample(batch_size)
+
+		states = np.array([step[0] for step in batch])
+		actions = np.array([step[1] for step in batch])
+		rewards = np.array([step[2] for step in batch])
+		next_states = np.array([step[3] for step in batch])
+		ends = np.array([step[4] for step in batch])
+
+		# query NN to get action-values
+		action_values = self.action_values(next_states)
+
+		# if it is `terminal` point, set its action-value to 0
+		action_values[ends] = (0, ) * self.n_actions
+
+		targets = rewards + self.gamma * np.max(action_values, axis=1)
+
+		# training ...
+		self.episodes += 1
+		feed = {self.nn.inputs__: states, self.nn.actions__: actions, self.nn.targets__: targets}
+		loss, _ = self.nn.sess.run([self.nn.loss, self.nn.opt], feed_dict=feed)
+			
+		return loss
 
 	def train_an_episode(self, episode):
 		states = np.array([step[0] for step in episode])
@@ -121,22 +141,6 @@ class DQN():
 		# agent is not moving in some steps(hit a wall), corresponding action should be zero-valued
 		#stay = (states == next_states).all(axis=1)
 		#targets[stay] = -1000
-
-		# wk_debug
-		#steps = []
-		#for i, v in enumerate(stay):
-		#	if v == True:
-		#		steps.append(i+1)
-		#print(steps)
-
-		#zero_targets = []
-		#for i, v in enumerate(targets):
-		#	if v == 0:
-		#		zero_targets.append(i+1)
-		#print(zero_targets)
-
-		# wk_debug
-		#print("targets:", targets)
 
 		# training ...
 		self.episodes += 1

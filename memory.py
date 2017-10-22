@@ -11,9 +11,6 @@ class Memory():
 	def sample(self, n):
 		assert n > 0
 
-		if self.n_records < n:
-			return None
-
 		# 'deque' object has O(n) for indexed access except for both ends(that is O(1))
 		# so first convert it to a list
 		a_list = list(self._memory)
