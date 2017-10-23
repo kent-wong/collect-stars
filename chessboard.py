@@ -52,10 +52,12 @@ if __name__ == "__main__":
 	print("item at (3, 3):", chess.item_at((3, 3)))
 	item = Item('yellow_star', (3, 3), pickable=True)
 	item.label = "new star"
-	chess.put_item(item.index, item)
+	#chess.put_item(item.index, item)
 	print("item at (3, 3):", chess.item_at((3, 3)))
 	print("index space:")
 	print(chess.index_space)
 
 	for value in chess.all_items:
 		print(value)
+
+	print("number of all_items:", len(chess.all_items))

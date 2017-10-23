@@ -25,7 +25,7 @@ class Agent():
 	def pickup(self, item):
 		self.bag.append(item)
 
-		#self.credit *= 10
+		self.credit *= 10
 		self.credit += item.credit
 
 	def drop(self):
