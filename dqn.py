@@ -101,6 +101,9 @@ class DQN():
 	def fill_experience(self, exp):
 		self.experience.add(exp)
 
+	def extend_experience(self, exp):
+		self.experience.extend(exp)
+
 	def clear_experience(self):
 		self.experience.clear()
 

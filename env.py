@@ -98,6 +98,27 @@ class Env():
 
 		return item
 
+	def random_move(self, index):
+		item = self.map.item_at(index)
+		if item is None:
+			return
+		assert item.index == index
+
+		action = self.action_space.sample()
+		next_index = self._item_move_by_order(index, action)
+		if item.index != next_index:
+			# move the item in chessboard
+			self.map.put_item(index, None)
+			assert self.map.item_at(next_index) is None
+			self.map.put_item(next_index, item)
+
+			# redraw item
+			self._remove_item(item)
+			item.index = next_index
+			self.redraw_item(item)
+
+		return next_index
+
 	def redraw_item(self, item):
 		if self.show:
 			self._draw_item(item)
@@ -111,6 +132,13 @@ class Env():
 
 		return item
 
+	def pickable_items(self):
+		bag = []
+		for item in self.map.all_items:
+			if item.pickable == True:
+				bag.append(item)
+		return bag
+			
 	def draw_text(self, index, text_dict):
 		if self.show:
 			self.drawing_manager.draw_text(index, text_dict)
@@ -132,26 +160,6 @@ class Env():
 	def _is_hit_wall(self, index):
 		return index in self.walls
 
-	#def _show_action_values(self, state, rl_algorithm):
-	#	assert rl_algorithm != None
-
-	#	index = self.index_from_state(state)
-	#	action_values_dict = rl_algorithm.get_action_values_dict(state)
-	#	if action_values_dict == None:
-	#		return
-
-	#	for action, value in action_values_dict.items():
-	#		action_values_dict[action] = str(int(value))
-	#	self.drawing_manager.draw_text(index, action_values_dict)
-	#	
-	#def _show_all_action_values(self, state, rl_algorithm):
-	#	factor = self.grid.n_cells
-	#	state_base = state // factor
-	#	state_base *= factor
-
-	#	for i in range(factor):
-	#		self._show_action_values(state_base+i, rl_algorithm)
-
 	def _move_by_order(self, start, actions):
 		move = {"N":(-1, 0), "S":(1, 0), "W":(0, -1), "E":(0, 1)}
 		destination = np.array(start)
@@ -168,6 +176,20 @@ class Env():
 				destination += np.array(move[action])
 
 		return (int(destination[0]), int(destination[1]))
+
+	def _item_move_by_order(self, start, action):
+		move = {"N":(-1, 0), "S":(1, 0), "W":(0, -1), "E":(0, 1)}
+		next_step = np.array(start)
+
+		next_step += np.array(move[action])
+		#if self._is_hit_wall((int(next_step[0]), int(next_step[1]))) == True:
+			#break
+
+		if self._is_hit_wall(next_step) or self.map.item_at(next_step) is None:
+			return start
+		else:
+			return next_step
+
 
 	def step(self, action):
 		agent_loc = self.agent.at
@@ -201,14 +223,13 @@ class Env():
 		else:
 			terminal = False
 
+		bag_of_items = []
 		if terminal == True:
 			reward += self.agent.credit
-			#bag_of_objects = self.agent.drop()
-			#for obj in bag_of_objects:
-			#	self.redraw_item(obj)
+			bag_of_items = self.agent.bag_of_objects
 
 		self._steps += 1
-		return (reward, next_index, terminal)
+		return (reward, next_index, terminal, bag_of_items)
 
 	def reset(self):
 		self.drawing_manager.delete_all_text()
@@ -221,6 +242,41 @@ class Env():
 
 		self._reset_agent_drawing()
 		self._steps = 0
+
+	def _simple_state_generator(self, env):
+		return self.agent.at
+
+	def _simple_action_generator(self, state):
+		return self.action_space.sample()
+
+	def create_episodes(n_episodes, state_generator=None, action_generator=None):
+		assert n_episodes > 0
+		if state_generator is None:
+			state_generator = _simple_state_generator
+		if action_generator is None:
+			action_generator = _simple_state_generator
+
+		total_episodes = []
+		for ep in n_episodes:
+			this_episode = []
+			self.reset()
+			state = state_generator(self)
+
+			end = False
+			while end != False:
+				action = action_generator(state)
+				action_id = env.action_space.action_id(action)
+				reward, next_index, end = self.step(action)
+				next_state = state_generator(self)
+
+				one_step = (state, action_id, reward, next_state, end)
+				this_episode.append(one_step)
+				
+			total_episodes += this_episode
+		return total_episodes
+
+
+			
 
 
 if __name__ == '__main__':
