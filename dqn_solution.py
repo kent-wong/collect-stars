@@ -47,8 +47,8 @@ class DQNSolution():
 		cols = self._regularize_range(width-1)
 		return rows[r], cols[c]
 
-	def _compose_state(self, encode):
-		agent_row, agent_col = self._regularize_location(self.env.agent.at)
+	def _compose_state(self, loc, encode):
+		agent_row, agent_col = self._regularize_location(loc)
 		return [agent_row, agent_col, encode]
 
 	def state(self):    
@@ -58,11 +58,13 @@ class DQNSolution():
 			assert item.label > 0 # `label` must start from 1
 			encode += pow(2, item.label-1)
 
-		state = self._compose_state(encode)
+		state = self._compose_state(self.env.agent.at, encode)
 		return state
 
-	def show_state(self, location):
-		state = self.state()
+	def show_agent_values(self):
+		self._show_action_values_from_loc_state(self.env.agent.at, self.state())
+			  
+	def _show_action_values_from_loc_state(self, loc, state):
 		state = np.array(state)
 		matrix_form = state.reshape((1, *state.shape))
 		action_values = self.dqn.action_values(matrix_form)[0]  
@@ -73,15 +75,16 @@ class DQNSolution():
 			value = np.round(value, 2)
 			text_dict[action] = str(value)
 
-		self.env.draw_values(location, text_dict)
-			  
-	def show_all_state(items_encode):
-		map_size = (self.env.map.n_rows, self.env.map.n_columns)
-		locations = [(row, col) for row in range(map_size[0]) for col in range(map_size[1])]
-		for loc in locations:
-			state = self.compose_state(loc, items_encode, map_size)
-			self.show_state(state, loc)
+		self.env.draw_values(loc, text_dict)
 
+	def show_all_action_values(self, items_encode):
+		self.env.show = True
+		rows, cols = (self.env.map.n_rows, self.env.map.n_columns)
+		locations = [(row, col) for row in range(rows) for col in range(cols)]
+		for loc in locations:
+			state = self._compose_state(loc, items_encode)
+			self._show_action_values_from_loc_state(loc, state)
+			
 	def train(self, n_episodes, show=False, delay=0):
 		env = self.env # just for convenience
 		total_losses = 0
@@ -98,7 +101,10 @@ class DQNSolution():
 			hit_walls = 0
 			end = False
 			while end == False:
-				self.show_state(location)
+				# show agent's action-values
+				if show:
+					self.show_agent_values()
+
 				action_id = self.dqn.next_action(state, episode)
 				action = env.action_space.action_from_id(action_id)
 				reward, next_location, end, _ = env.step(action)
@@ -129,31 +135,41 @@ class DQNSolution():
 			# train a whole episode
 			loss = self.dqn.train_an_episode(this_episode)
 			total_losses += loss
+			if reward > 0: # train again
+				self.dqn.train_an_episode(this_episode)
+
 
 			#print("items remain in map:", len(env.pickable_items()))
-			print("# {}: batch avg loss is {:.4f}, agent moved {} steps, hit walls {}, reward is {}".format(
+			print("# {}: batch avg loss is {:.4f}, steps/hit walls:{}/{}, stars {}, reward is {}".format(
 				episode, 
 				loss,
 				env.steps,
 				hit_walls,
+				len(env.agent.bag_of_objects),
 				reward))
 			#env.show = True
 			#show_all_state2(env, 0)
 
-	def test(self, action_func):
+	def test(self, action_func, delay=1):
+		env = self.env
 		env.reset()
 		env.show = True
 		end = False
 		while end == False:
 		    # debug
-		    self.show_state()
+		    self.show_agent_values()
 
 		    state = self.state()
 		    action_id = action_func(state)
 		    action = self.env.action_space.action_from_id(action_id)
 
-		    # debug
-		    #print("action:", action)
-		    
 		    reward, next_location, end, _ = env.step(action)
-		    time.sleep(0.2)
+		    time.sleep(delay)
+
+
+if __name__ == "__main__":
+	solution =solution = DQNSolution(gamma=0.9, lr=0.001) 
+	solution.train(1000, show=False, delay=0.1)
+
+	#solution.test(solution.dqn.best_action, delay=0.5)
+	solution.show_all_action_values(0)

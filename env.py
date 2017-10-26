@@ -170,14 +170,15 @@ class Env():
 		self.agent.at = dest
 		self.let_agent_pickup(dest)
 
-	def let_agent_random_teleport(self):
+	def let_agent_random_teleport(self, only_empty_square=True):
 		squares = self.map.squares_list
 		while True:
 			n = np.random.randint(len(squares))
 			dest = squares[n]
-			item = self.map.item_at(dest)
-			if item is None or item.terminal != True:
-				break
+			if only_empty_square:
+				item = self.map.item_at(dest)
+				if item is None:
+					break
 		return self.let_agent_teleport(dest)
 
 	def draw_text(self, index, text_dict):
