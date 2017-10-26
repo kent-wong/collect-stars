@@ -139,6 +139,22 @@ class Env():
 				bag.append(item)
 		return bag
 			
+	def let_agent_pickup(self, index):
+		item = self.map.item_at(index)
+		if item != None:
+			# if this item is pickable, let agent pick it up
+			if item.pickable == True:
+				self.agent.pickup(item)
+				self.remove_item(index)
+		return item
+
+	def let_agent_teleport(self, dest):
+		if self.show:
+			self.drawing_manager.remove_agent()
+			self.drawing_manager.draw_agent(dest, 'E')
+		self.agent.at = dest
+		self.let_agent_pickup(dest)
+
 	def draw_text(self, index, text_dict):
 		if self.show:
 			self.drawing_manager.draw_text(index, text_dict)
@@ -232,7 +248,7 @@ class Env():
 		return (reward, next_index, terminal, bag_of_items)
 
 	def reset(self):
-		self.drawing_manager.delete_all_text()
+		self.drawing_manager.delete_all_values()
 
 		self.agent.reset()
 		bag_of_items = self.agent.drop()
@@ -276,20 +292,21 @@ class Env():
 		return total_episodes
 
 
-			
-
-
 if __name__ == '__main__':
 	# set the environment
 	env = Env((8, 8), (130, 90), default_rewards=0)
-	env.add_item('yellow_star', (3, 3), credit=100, pickable=True, label="(100)")
-	env.add_item('yellow_star', (0, 7), credit=1000, pickable=True, label="(1000)")
+	env.add_item('yellow_star', (3, 3), credit=100, pickable=True, label="1")
+	env.add_item('yellow_star', (0, 7), credit=1000, pickable=True, label="2")
 	env.add_item('red_ball', (5, 6), terminal=True, label="Exit")
 
-	for _ in range(100):
+	time.sleep(0.5)
+	env.let_agent_teleport((3, 3))
+	time.sleep(0.5)
+
+	for _ in range(10):
 		action = env.action_space.sample()
 		print(action)
-		reward, next, end = env.step(action)
+		reward, next, end, _ = env.step(action)
 		print(reward, next, end)
 		time.sleep(0.2)
 	env.reset()

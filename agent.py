@@ -83,6 +83,3 @@ class Agent():
 			facing = 'E'
 		self._born_facing = facing
 		self.reset()
-
-
-

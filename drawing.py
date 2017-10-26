@@ -25,7 +25,7 @@ def draw_yellow_star(canvas, bbox):
 
 	return canvas.create_polygon(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4, fill='yellow')
 
-def draw_pacman(canvas, bbox, angle=0, color='blue', outline='black', ratio=1):
+def draw_pacman(canvas, bbox, angle=0, color='blue', outline='black', ratio=0.8):
 	start = 35 + angle
 	extent = 290
 	canvas_id = canvas.create_arc(*bbox, start=start, extent=extent, fill=color, outline=outline)
@@ -132,6 +132,10 @@ class DrawingManager(threading.Thread):
 		return 'text@all'
 
 	@staticmethod
+	def _tag_of_values():
+		return 'values@all'
+
+	@staticmethod
 	def _tag_of_agent():
 		return 'agent'
 
@@ -177,12 +181,28 @@ class DrawingManager(threading.Thread):
 			self.canvas.addtag_withtag(tag, canvas_id)
 			self.canvas.addtag_withtag(tag_all, tag)
 		
+	def draw_values(self, index, text_dict):
+		bbox = self.bounding_box(index)
+		tag = self._tag_of_text_square(index)
+		tag_all = self._tag_of_values()
+
+		self.canvas.delete(tag)
+		anchor_dict = {"N":tk.N, "S":tk.S, "W":tk.W, "E":tk.E, "C":tk.CENTER}
+		for anchor, text in text_dict.items():
+			canvas_id = draw_text(self.canvas, bbox, text, anchor_dict[anchor])
+			self.canvas.addtag_withtag(tag, canvas_id)
+			self.canvas.addtag_withtag(tag_all, tag)
+		
 	def delete_text(self, index):
 		tag = self._tag_of_text_square(index)
 		self.canvas.delete(tag)
 		
 	def delete_all_text(self):
 		tag_all = self._tag_of_text()
+		self.canvas.delete(tag_all)
+
+	def delete_all_values(self):
+		tag_all = self._tag_of_values()
 		self.canvas.delete(tag_all)
 
 	#def draw_text_list(self, index_or_id, text_anchor_list):
