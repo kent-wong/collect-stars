@@ -184,6 +184,10 @@ class Env():
 		if self.show:
 			self.drawing_manager.draw_text(index, text_dict)
 
+	def draw_values(self, index, text_dict):
+		if self.show:
+			self.drawing_manager.draw_values(index, text_dict)
+
 	def show_action_values(action_values):
 		text_dict = {}    
 		for action_id, value in enumerate(action_values):
@@ -244,7 +248,7 @@ class Env():
 			if item.terminal == True:
 				return (0, agent_loc, True, [])
 			else:
-				reward = item.reward
+				reward = item.credit
 		else:
 			reward = self.default_rewards
 
@@ -254,9 +258,10 @@ class Env():
 
 		item = self.map.item_at(next_index)
 		if item != None:
+			reward += item.credit
+
 			# `terminal point` must be an item, empty square can't be terminal
 			terminal = item.terminal
-
 			# if this item is pickable, let agent pick it up
 			if item.pickable == True:
 				self.agent.pickup(item)
@@ -271,8 +276,6 @@ class Env():
 
 		self._steps += 1
 
-		# wk_debug
-		print((reward, next_index, terminal, bag_of_items))
 		return (reward, next_index, terminal, bag_of_items)
 
 	def reset(self):

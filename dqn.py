@@ -168,19 +168,6 @@ class DQN():
 
 			targets = rewards + self.gamma * np.max(action_values, axis=1)
 
-			# agent is not moving in some steps(hit a wall), corresponding action should be zero-valued
-			#stay = (states == next_states).all(axis=1)
-			#targets[stay] = 0
-
-			# wk_debug
-			#for i in stay:
-			#	if i == True:
-			#		print(i, "end=")
-			#print()
-
-			#print("stay:", stay)
-			#print("targets:", targets)
-
 			if all_states is None:
 				all_states = states
 				all_actions = actions
