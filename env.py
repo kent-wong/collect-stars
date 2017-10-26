@@ -154,12 +154,14 @@ class Env():
 		if len(items) < n:
 			n = len(items)
 
-		picked = 0
-		while picked < n:
-			i = np.random.randint(len(items))
-			self.let_agent_teleport(items[i].index)
-			picked += 1
-		return picked
+		if n > 0:
+			n = np.random.randint(n+1)
+
+		if n > 0:
+			items_chosen = np.random.choice(items, n, replace=False)
+			for i in items_chosen:
+				self.let_agent_teleport(i.index)
+		return n
 
 	def let_agent_teleport(self, dest):
 		if self.show:
@@ -240,7 +242,7 @@ class Env():
 		if item != None:
 			# if currently agent is on `terminal point`, then do nothing
 			if item.terminal == True:
-				return (0, agent_loc, True)
+				return (0, agent_loc, True, [])
 			else:
 				reward = item.reward
 		else:
@@ -264,10 +266,13 @@ class Env():
 
 		bag_of_items = []
 		if terminal == True:
-			reward += self.agent.credit
+			#reward += self.agent.credit
 			bag_of_items = self.agent.bag_of_objects
 
 		self._steps += 1
+
+		# wk_debug
+		print((reward, next_index, terminal, bag_of_items))
 		return (reward, next_index, terminal, bag_of_items)
 
 	def reset(self):
@@ -320,18 +325,19 @@ if __name__ == '__main__':
 	env = Env((8, 8), (130, 90), default_rewards=0)
 	env.add_item('yellow_star', (3, 3), credit=100, pickable=True, label="1")
 	env.add_item('yellow_star', (0, 7), credit=1000, pickable=True, label="2")
+	env.add_item('yellow_star', (7, 5), credit=1000, pickable=True, label="3")
 	env.add_item('red_ball', (5, 6), terminal=True, label="Exit")
 
-	for _ in range(10):
-		time.sleep(0.5)
+	for _ in range(100):
+		env.reset()
+		time.sleep(0.3)
 		#env.let_agent_random_teleport()
-		env.let_agent_random_pickup(2)
-		time.sleep(0.5)
+		env.let_agent_random_pickup(3)
+		time.sleep(0.3)
 
-	for _ in range(10):
-		action = env.action_space.sample()
-		print(action)
-		reward, next, end, _ = env.step(action)
-		print(reward, next, end)
-		time.sleep(0.2)
-	env.reset()
+		for _ in range(100):
+			action = env.action_space.sample()
+			#print(action)
+			reward, next_state, end, picked_items = env.step(action)
+			print(reward, next_state, end)
+			time.sleep(0.2)
