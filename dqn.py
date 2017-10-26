@@ -69,7 +69,7 @@ class DQN():
 
 		# `action` selection algorithm parameters
 		self.explore_start = 1.0
-		self.explore_stop = 0.2
+		self.explore_stop = 0.1
 		self.decay_rate = 0.0001
 
 		# hyperparameters
@@ -150,7 +150,7 @@ class DQN():
 			
 		return loss
 
-	def train_batch(self, episodes):
+	def train_multi_episodes(self, episodes):
 		all_states = None
 		all_actions = None
 		all_targets = None

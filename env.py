@@ -163,7 +163,7 @@ class Env():
 			items_chosen = np.random.choice(items, n, replace=False)
 			for i in items_chosen:
 				self.let_agent_teleport(i.index)
-		return n
+		return n # actually picked
 
 	def let_agent_teleport(self, dest):
 		if self.show:
