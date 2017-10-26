@@ -85,12 +85,15 @@ class DQNSolution():
 			state = self._compose_state(loc, items_encode)
 			self._show_action_values_from_loc_state(loc, state)
 			
-	def train(self, n_episodes, show=False, delay=0):
+	def train(self, n_episodes, truncate=None, show=False, delay=0):
 		env = self.env # just for convenience
 		total_losses = 0
 		for episode in range(1, n_episodes+1):
 			env.reset()
 			env.show = show
+
+			self.env.let_agent_random_pickup()
+			#self.env.let_agent_random_teleport()
 
 			# get initial state and location
 			state = self.state()
@@ -121,7 +124,7 @@ class DQNSolution():
 				if location == next_location:
 					hit_walls += 1
 
-				if env.steps >= 400:
+				if truncate is not None and env.steps >= truncate:
 					break
 
 				# debug info

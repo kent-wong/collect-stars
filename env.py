@@ -148,10 +148,12 @@ class Env():
 				self.remove_item(index)
 		return item
 
-	def let_agent_random_pickup(self, n=1):
+	def let_agent_random_pickup(self, n=None):
 		"""let agent randomly pickup at most `n` items"""
 		items = self.pickable_items()
-		if len(items) < n:
+		if n is None:
+			n = len(items)
+		elif len(items) < n:
 			n = len(items)
 
 		if n > 0:
