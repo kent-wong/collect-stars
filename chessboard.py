@@ -40,7 +40,7 @@ class Chessboard():
 		return self._items.values()
 
 	@property
-	def index_space(self):
+	def squares_list(self):
 		return [(row, column) for row in range(self.n_rows) for column in range(self.n_columns)]
 
 

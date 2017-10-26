@@ -133,11 +133,11 @@ class Env():
 		return item
 
 	def pickable_items(self):
-		bag = []
+		items = []
 		for item in self.map.all_items:
 			if item.pickable == True:
-				bag.append(item)
-		return bag
+				items.append(item)
+		return items
 			
 	def let_agent_pickup(self, index):
 		item = self.map.item_at(index)
@@ -148,12 +148,35 @@ class Env():
 				self.remove_item(index)
 		return item
 
+	def let_agent_random_pickup(self, n=1):
+		"""let agent randomly pickup at most `n` items"""
+		items = self.pickable_items()
+		if len(items) < n:
+			n = len(items)
+
+		picked = 0
+		while picked < n:
+			i = np.random.randint(len(items))
+			self.let_agent_teleport(items[i].index)
+			picked += 1
+		return picked
+
 	def let_agent_teleport(self, dest):
 		if self.show:
 			self.drawing_manager.remove_agent()
 			self.drawing_manager.draw_agent(dest, 'E')
 		self.agent.at = dest
 		self.let_agent_pickup(dest)
+
+	def let_agent_random_teleport(self):
+		squares = self.map.squares_list
+		while True:
+			n = np.random.randint(len(squares))
+			dest = squares[n]
+			item = self.map.item_at(dest)
+			if item is None or item.terminal != True:
+				break
+		return self.let_agent_teleport(dest)
 
 	def draw_text(self, index, text_dict):
 		if self.show:
@@ -299,9 +322,11 @@ if __name__ == '__main__':
 	env.add_item('yellow_star', (0, 7), credit=1000, pickable=True, label="2")
 	env.add_item('red_ball', (5, 6), terminal=True, label="Exit")
 
-	time.sleep(0.5)
-	env.let_agent_teleport((3, 3))
-	time.sleep(0.5)
+	for _ in range(10):
+		time.sleep(0.5)
+		#env.let_agent_random_teleport()
+		env.let_agent_random_pickup(2)
+		time.sleep(0.5)
 
 	for _ in range(10):
 		action = env.action_space.sample()
